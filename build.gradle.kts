@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "net.koteczekui.appoapps"
-version = "2026011706"
+version = "2026011707"
 
 repositories {
     mavenCentral()

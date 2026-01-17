@@ -3,7 +3,10 @@ package net.koteczekui.appoapps.gui;
 import net.koteczekui.appoapps.core.*;
 import net.koteczekui.appoapps.model.AppEntry;
 import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
+import java.io.File;
 
 public class MainWindow extends JFrame {
     private final AppConfig config;
@@ -17,6 +20,9 @@ public class MainWindow extends JFrame {
     private JButton btnStart = new JButton("START");
     private JButton btnStop = new JButton("STOP");
     private AppWorker currentWorker;
+
+    private JTree folderTree = new JTree(new DefaultMutableTreeNode("Results"));
+    private DefaultTreeModel treeModel = (DefaultTreeModel) folderTree.getModel();
 
     public MainWindow(AppConfig config, SearchEngine engine, LauncherLogic launcher) {
         this.config = config;
@@ -82,9 +88,12 @@ public class MainWindow extends JFrame {
                     progressBar.setString("Scanning: 0%");
                     btnStart.setEnabled(false);
                     listModel.clear();
+                    ((DefaultMutableTreeNode)treeModel.getRoot()).removeAllChildren();
+                    treeModel.reload();
                 },
                 results -> {
                     results.forEach(listModel::addElement);
+                    updateTreeView(results);
                     progressBar.setValue(100);
                     progressBar.setString("Done! Found: " + results.size());
                     btnStart.setEnabled(true);
@@ -101,6 +110,22 @@ public class MainWindow extends JFrame {
         });
 
         currentWorker.execute();
+    }
+
+    private void updateTreeView(java.util.List<AppEntry> results) {
+        DefaultMutableTreeNode root = (DefaultMutableTreeNode) treeModel.getRoot();
+        root.removeAllChildren();
+
+        java.util.Set<String> folderPaths = new java.util.HashSet<>();
+        for (AppEntry entry : results) {
+            File f = new File(entry.getPath());
+            folderPaths.add(f.getParent());
+        }
+
+        for (String path : folderPaths) {
+            root.add(new DefaultMutableTreeNode(path));
+        }
+        treeModel.reload();
     }
 
     private void applyInitialSettings() {
