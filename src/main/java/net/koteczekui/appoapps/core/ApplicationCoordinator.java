@@ -27,7 +27,7 @@ public class ApplicationCoordinator implements SearchEventListener {
         ThemeColors selected = config.currentTheme.equals(AppConstants.THEME_DARK)
                 ? darkPalette : lightPalette;
 
-        ThemeManager.applyTheme(mainWindow.getContentPane(), config.currentTheme);
+        ThemeManager.apply(mainWindow.getContentPane(), config.currentTheme);
     }
 
     @Override

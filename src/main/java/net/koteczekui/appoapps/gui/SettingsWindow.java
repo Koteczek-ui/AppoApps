@@ -2,81 +2,64 @@ package net.koteczekui.appoapps.gui;
 
 import net.koteczekui.appoapps.core.AppConfig;
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.util.ArrayList;
 
 public class SettingsWindow extends JDialog {
-
     private final AppConfig config;
-    private final DefaultListModel<String> folderListModel;
-    private final JList<String> folderList;
+    private final DefaultListModel<String> folderModel;
 
     public SettingsWindow(JFrame parent, AppConfig config) {
         super(parent, "AppoApps Settings", true);
         this.config = config;
 
-        setSize(400, 500);
+        setSize(450, 400);
         setLocationRelativeTo(parent);
         setLayout(new BorderLayout(10, 10));
 
-        folderListModel = new DefaultListModel<>();
-        config.searchFolders.forEach(folderListModel::addElement);
-        folderList = new JList<>(folderListModel);
+        folderModel = new DefaultListModel<>();
+        config.searchFolders.forEach(folderModel::addElement);
+        JList<String> folderList = new JList<>(folderModel);
 
-        JPanel listPanel = new JPanel(new BorderLayout());
-        listPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
-        listPanel.add(new JLabel("Search Folders:"), BorderLayout.NORTH);
-        listPanel.add(new JScrollPane(folderList), BorderLayout.CENTER);
-
-        JPanel folderActions = new JPanel();
+        JPanel btnPanel = new JPanel();
         JButton btnAdd = new JButton("Add Folder");
-        JButton btnRemove = new JButton("Remove Selected");
+        JButton btnRem = new JButton("Remove Selected");
+        JButton btnToggleTheme = new JButton("Toggle Theme");
 
         btnAdd.addActionListener(e -> addFolder());
-        btnRemove.addActionListener(e -> removeFolder());
-
-        folderActions.add(btnAdd);
-        folderActions.add(btnRemove);
-        listPanel.add(folderActions, BorderLayout.SOUTH);
-
-        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton btnSave = new JButton("Apply & Close");
-        btnSave.addActionListener(e -> {
-            saveAndClose();
-            dispose();
+        btnRem.addActionListener(e -> {
+            int idx = folderList.getSelectedIndex();
+            if (idx != -1) {
+                config.searchFolders.remove(folderModel.get(idx));
+                folderModel.remove(idx);
+            }
         });
-        bottomPanel.add(btnSave);
 
-        add(listPanel, BorderLayout.CENTER);
-        add(bottomPanel, BorderLayout.SOUTH);
+        btnToggleTheme.addActionListener(e -> {
+            config.currentTheme = !config.currentTheme;
+            ThemeManager.apply(parent.getContentPane(), config.currentTheme);
+            ThemeManager.apply(this.getContentPane(), config.currentTheme);
+        });
 
-        ThemeManager.applyTheme(this.getContentPane(), config.currentTheme);
+        btnPanel.add(btnAdd);
+        btnPanel.add(btnRem);
+        btnPanel.add(btnToggleTheme);
+
+        add(new JLabel(" Managed Search Directories:"), BorderLayout.NORTH);
+        add(new JScrollPane(folderList), BorderLayout.CENTER);
+        add(btnPanel, BorderLayout.SOUTH);
+
+        ThemeManager.apply(this.getContentPane(), config.currentTheme);
     }
 
     private void addFolder() {
-        JFileChooser chooser = new JFileChooser();
-        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            String path = chooser.getSelectedFile().getAbsolutePath();
-            if (!folderListModel.contains(path)) {
-                folderListModel.addElement(path);
+        JFileChooser fc = new JFileChooser();
+        fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        if (fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            String path = fc.getSelectedFile().getAbsolutePath();
+            if (!config.searchFolders.contains(path)) {
+                config.searchFolders.add(path);
+                folderModel.addElement(path);
             }
         }
-    }
-
-    private void removeFolder() {
-        int index = folderList.getSelectedIndex();
-        if (index != -1) {
-            folderListModel.remove(index);
-        }
-    }
-
-    private void saveAndClose() {
-        config.searchFolders = new ArrayList<>();
-        for (int i = 0; i < folderListModel.size(); i++) {
-            config.searchFolders.add(folderListModel.get(i));
-        }
-        config.saveAll();
     }
 }

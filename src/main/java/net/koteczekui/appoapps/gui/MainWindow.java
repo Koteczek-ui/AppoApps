@@ -1,107 +1,99 @@
 package net.koteczekui.appoapps.gui;
 
 import net.koteczekui.appoapps.core.*;
+import net.koteczekui.appoapps.model.AppEntry;
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.*;
-import java.util.Map;
 
 public class MainWindow extends JFrame {
     private final AppConfig config;
     private final SearchEngine engine;
     private final LauncherLogic launcher;
 
-    private JTextField searchBar;
-    private JList<String> resultList;
-    private DefaultListModel<String> listModel;
-    private Map<String, String> currentResults;
+    private JTextField searchField = new JTextField(20);
+    private DefaultListModel<AppEntry> listModel = new DefaultListModel<>();
+    private JList<AppEntry> resultList = new JList<>(listModel);
+    private JProgressBar progressBar = new JProgressBar();
+    private JButton btnStart = new JButton("START");
+    private JButton btnStop = new JButton("STOP");
+    private AppWorker currentWorker;
 
     public MainWindow(AppConfig config, SearchEngine engine, LauncherLogic launcher) {
         this.config = config;
         this.engine = engine;
         this.launcher = launcher;
 
-        setupFrame();
-        initComponents();
-        applyInitialState();
+        setupUI();
+        applyInitialSettings();
     }
 
-    private void setupFrame() {
-        setTitle("AppoApps - Smart Launcher");
-        setSize(500, 700);
-        setMinimumSize(new Dimension(400, 500));
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
-        setLayout(new BorderLayout(0, 0));
-    }
+    private void setupUI() {
+        setTitle("AppoApps");
+        setSize(550, 700);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLayout(new BorderLayout(10, 10));
 
-    private void initComponents() {
-        JPanel topPanel = new JPanel(new BorderLayout(10, 10));
-        topPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
+        JPanel top = new JPanel(new BorderLayout(5, 5));
+        top.add(new JLabel(" Search: "), BorderLayout.WEST);
+        top.add(searchField, BorderLayout.CENTER);
 
-        searchBar = new JTextField();
-        searchBar.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        JButton btnSet = new JButton("⚙ Settings");
+        btnSet.addActionListener(e -> new SettingsWindow(this, config).setVisible(true));
+        top.add(btnSet, BorderLayout.EAST);
 
-        JButton btnTheme = new JButton("ALT THEME");
-        btnTheme.addActionListener(e -> toggleTheme());
+        JPanel bottom = new JPanel(new BorderLayout());
+        JPanel controls = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        controls.add(btnStart);
+        controls.add(btnStop);
 
-        topPanel.add(new JLabel("Search Apps:"), BorderLayout.NORTH);
-        topPanel.add(searchBar, BorderLayout.CENTER);
-        topPanel.add(btnTheme, BorderLayout.EAST);
+        progressBar.setStringPainted(true);
+        bottom.add(controls, BorderLayout.WEST);
+        bottom.add(progressBar, BorderLayout.CENTER);
 
-        listModel = new DefaultListModel<>();
-        resultList = new JList<>(listModel);
-        resultList.setCellRenderer(new AppListRenderer());
-        resultList.setFixedCellHeight(40);
+        btnStart.addActionListener(e -> startSearch());
+        btnStop.addActionListener(e -> { if(currentWorker != null) currentWorker.cancel(true); });
 
-        JScrollPane scrollPane = new JScrollPane(resultList);
-        scrollPane.setBorder(new EmptyBorder(5, 15, 15, 15));
-
-        searchBar.addKeyListener(new KeyAdapter() {
-            public void keyReleased(KeyEvent e) { performSearch(); }
-        });
-
-        resultList.addMouseListener(new MouseAdapter() {
-            public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2) handleLaunch();
+        resultList.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                if(e.getClickCount() == 2 && resultList.getSelectedValue() != null) {
+                    try {
+                        launcher.launch(resultList.getSelectedValue().getPath());
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(MainWindow.this, "Error: " + ex.getMessage());
+                    }
+                }
             }
         });
 
-        add(topPanel, BorderLayout.NORTH);
-        add(scrollPane, BorderLayout.CENTER);
+        add(top, BorderLayout.NORTH);
+        add(new JScrollPane(resultList), BorderLayout.CENTER);
+        add(bottom, BorderLayout.SOUTH);
     }
 
-    private void performSearch() {
-        String query = searchBar.getText();
-        config.lastSearch = query;
-        currentResults = engine.findApps(config.searchFolders, query);
+    private void startSearch() {
+        if (currentWorker != null) currentWorker.cancel(true);
 
-        listModel.clear();
-        for (String name : currentResults.keySet()) {
-            listModel.addElement(name);
-        }
+        currentWorker = new AppWorker(config.searchFolders, searchField.getText(),
+                () -> {
+                    progressBar.setIndeterminate(true);
+                    progressBar.setString("Scanning...");
+                    btnStart.setEnabled(false);
+                    listModel.clear();
+                },
+                results -> {
+                    results.forEach(listModel::addElement);
+                    progressBar.setIndeterminate(false);
+                    progressBar.setValue(100);
+                    progressBar.setString("Done! Found: " + results.size());
+                    btnStart.setEnabled(true);
+
+                    config.lastSearch = searchField.getText();
+                });
+        currentWorker.execute();
     }
 
-    private void handleLaunch() {
-        String selected = resultList.getSelectedValue();
-        if (selected != null) {
-            try {
-                launcher.launch(currentResults.get(selected));
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
-            }
-        }
-    }
-
-    private void toggleTheme() {
-        config.currentTheme = config.currentTheme.equals("Dark") ? "Light" : "Dark";
-        ThemeManager.applyTheme(this, config.currentTheme);
-    }
-
-    private void applyInitialState() {
-        searchBar.setText(config.lastSearch);
-        ThemeManager.applyTheme(this, config.currentTheme);
-        performSearch();
+    private void applyInitialSettings() {
+        searchField.setText(config.lastSearch);
+        ThemeManager.apply(this.getContentPane(), config.currentTheme);
     }
 }

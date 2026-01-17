@@ -2,8 +2,8 @@ plugins {
     id("java")
 }
 
-group = "net.koteczek-ui.appoapps"
-version = "2026011702"
+group = "net.koteczekui.appoapps"
+version = "2026011705"
 
 repositories {
     mavenCentral()

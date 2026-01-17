@@ -11,7 +11,7 @@ public class AppConfig {
     private final File settingsFile;
     private final File sessionFile;
 
-    public String currentTheme = "Dark";
+    public Boolean currentTheme = true;
     public List<String> searchFolders = new ArrayList<>();
     public String lastSearch = "";
 
@@ -51,9 +51,10 @@ public class AppConfig {
 
     private void writeSettings() throws IOException {
         StringBuilder json = new StringBuilder("{\n");
-        json.append("  \"theme\": \"").append(currentTheme).append("\",\n");
+        json.append("  \"theme\": ").append(currentTheme).append(",\n");
         json.append("  \"folders\": [\n");
         String folderList = searchFolders.stream()
+                .distinct()
                 .map(f -> "    \"" + f.replace("\\", "\\\\") + "\"")
                 .collect(Collectors.joining(",\n"));
         json.append(folderList).append("\n  ]\n}");
@@ -75,7 +76,8 @@ public class AppConfig {
                 List<String> lines = Files.readAllLines(settingsFile.toPath());
                 for (String line : lines) {
                     if (line.contains("\"theme\":")) {
-                        this.currentTheme = line.split(":")[1].replaceAll("[\", ]", "").trim();
+                        String val = line.split(":")[1].replaceAll("[,\s\"]", "").trim();
+                        this.currentTheme = Boolean.parseBoolean(val);
                     }
                 }
             } catch (IOException e) {
