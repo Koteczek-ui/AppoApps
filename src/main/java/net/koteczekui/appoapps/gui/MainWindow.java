@@ -95,7 +95,7 @@ public class MainWindow extends JFrame {
                 results -> {
                     results.forEach(listModel::addElement);
                     updateTreeView(results);
-                    progressBar.setValue(100);
+                    progressBar.setEnabled(false);
                     progressBar.setString("Done! Found: " + results.size());
                     btnStart.setEnabled(true);
                     btnStop.setEnabled(false);
