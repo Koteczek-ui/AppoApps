@@ -88,8 +88,6 @@ public class MainWindow extends JFrame {
                     progressBar.setString("Scanning: 0%");
                     btnStart.setEnabled(false);
                     listModel.clear();
-                    ((DefaultMutableTreeNode)treeModel.getRoot()).removeAllChildren();
-                    treeModel.reload();
                 },
                 results -> {
                     results.forEach(listModel::addElement);
@@ -97,15 +95,17 @@ public class MainWindow extends JFrame {
                     progressBar.setValue(100);
                     progressBar.setString("Done! Found: " + results.size());
                     btnStart.setEnabled(true);
+
                     config.lastSearch = searchField.getText();
+                    config.saveToDat();
                 }
         );
 
         currentWorker.addPropertyChangeListener(evt -> {
             if ("progress".equals(evt.getPropertyName())) {
-                int progress = (Integer) evt.getNewValue();
-                progressBar.setValue(progress);
-                progressBar.setString("Scanning: " + progress + "%");
+                int p = (Integer) evt.getNewValue();
+                progressBar.setValue(p);
+                progressBar.setString("Scanning: " + p + "%");
             }
         });
 

@@ -13,26 +13,25 @@ public class AppWorker extends SwingWorker<List<AppEntry>, Void> {
     private final Runnable onStart;
     private final Consumer<List<AppEntry>> onDone;
 
-    private final String[] extensions = {".jar", ".msi", ".com", ".exe", ".py", ".pyc", ".pyw", ".bat", ".cmd", ".vbs", ".html", ".js"};
+    private final String[] extensions = {".dat", ".jar", ".msi", ".com", ".exe", ".py", ".pyc", ".pyw", ".bat", ".cmd", ".vbs", ".html", ".js"};
 
     public AppWorker(List<String> folders, String query, Runnable onStart, Consumer<List<AppEntry>> onDone) {
         this.folders = folders;
         this.query = query.toLowerCase();
         this.onStart = onStart;
         this.onDone = onDone;
-
         SwingUtilities.invokeLater(onStart);
     }
 
     @Override
     protected List<AppEntry> doInBackground() throws Exception {
         List<AppEntry> foundApps = new ArrayList<>();
-        if (folders == null) return foundApps;
+        if (folders == null || folders.isEmpty()) return foundApps;
 
         for (int i = 0; i < folders.size(); i++) {
-            File dir = new File(folders.get(i));
-            if (dir.exists() && dir.isDirectory()) {
-                scan(dir, foundApps);
+            File root = new File(folders.get(i));
+            if (root.exists()) {
+                scan(root, foundApps);
             }
             int progress = (int) (((double) (i + 1) / folders.size()) * 100);
             setProgress(Math.min(progress, 100));
@@ -65,11 +64,7 @@ public class AppWorker extends SwingWorker<List<AppEntry>, Void> {
     @Override
     protected void done() {
         try {
-            if (!isCancelled()) {
-                onDone.accept(get());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+            if (!isCancelled()) onDone.accept(get());
+        } catch (Exception e) { e.printStackTrace(); }
     }
 }
