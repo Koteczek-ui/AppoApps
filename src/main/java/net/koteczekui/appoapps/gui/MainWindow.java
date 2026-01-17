@@ -73,22 +73,33 @@ public class MainWindow extends JFrame {
     private void startSearch() {
         if (currentWorker != null) currentWorker.cancel(true);
 
-        currentWorker = new AppWorker(config.searchFolders, searchField.getText(),
+        currentWorker = new AppWorker(
+                config.searchFolders,
+                searchField.getText(),
                 () -> {
-                    progressBar.setIndeterminate(true);
-                    progressBar.setString("Scanning...");
+                    progressBar.setIndeterminate(false);
+                    progressBar.setValue(0);
+                    progressBar.setString("Scanning: 0%");
                     btnStart.setEnabled(false);
                     listModel.clear();
                 },
                 results -> {
                     results.forEach(listModel::addElement);
-                    progressBar.setIndeterminate(false);
                     progressBar.setValue(100);
                     progressBar.setString("Done! Found: " + results.size());
                     btnStart.setEnabled(true);
-
                     config.lastSearch = searchField.getText();
-                });
+                }
+        );
+
+        currentWorker.addPropertyChangeListener(evt -> {
+            if ("progress".equals(evt.getPropertyName())) {
+                int progress = (Integer) evt.getNewValue();
+                progressBar.setValue(progress);
+                progressBar.setString("Scanning: " + progress + "%");
+            }
+        });
+
         currentWorker.execute();
     }
 
