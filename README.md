@@ -21,3 +21,4 @@
   - Java
 
 - *PROGRAMMING LANGUAGES: JAVA*
+- *VERSION DESIGNATION: yyyy-mm-dd-bb (y=year, m=month, d=day, b=build)*
