@@ -34,7 +34,7 @@ public class MainWindow extends JFrame {
     }
 
     private void setupUI() {
-        setTitle("AppoApps");
+        setTitle("AppoApps 2026011710");
         setSize(550, 700);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(new BorderLayout(10, 10));
@@ -51,6 +51,9 @@ public class MainWindow extends JFrame {
         JPanel controls = new JPanel(new FlowLayout(FlowLayout.LEFT));
         controls.add(btnStart);
         controls.add(btnStop);
+
+        btnStart.setEnabled(true);
+        btnStop.setEnabled(false);
 
         progressBar.setStringPainted(true);
         bottom.add(controls, BorderLayout.WEST);
@@ -83,10 +86,10 @@ public class MainWindow extends JFrame {
                 config.searchFolders,
                 searchField.getText(),
                 () -> {
-                    progressBar.setIndeterminate(false);
-                    progressBar.setValue(0);
-                    progressBar.setString("Scanning: 0%");
+                    progressBar.setIndeterminate(true);
+                    progressBar.setString("Scanning...");
                     btnStart.setEnabled(false);
+                    btnStop.setEnabled(true);
                     listModel.clear();
                 },
                 results -> {
@@ -95,19 +98,12 @@ public class MainWindow extends JFrame {
                     progressBar.setValue(100);
                     progressBar.setString("Done! Found: " + results.size());
                     btnStart.setEnabled(true);
+                    btnStop.setEnabled(false);
 
                     config.lastSearch = searchField.getText();
                     config.saveToDat();
                 }
         );
-
-        currentWorker.addPropertyChangeListener(evt -> {
-            if ("progress".equals(evt.getPropertyName())) {
-                int p = (Integer) evt.getNewValue();
-                progressBar.setValue(p);
-                progressBar.setString("Scanning: " + p + "%");
-            }
-        });
 
         currentWorker.execute();
     }
