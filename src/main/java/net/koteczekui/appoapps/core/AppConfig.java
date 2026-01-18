@@ -13,9 +13,10 @@ public class AppConfig implements Serializable {
     public Boolean currentTheme = true;
 
     public void saveToDat() {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(FILE_NAME))) {
+        File file = new File(FILE_NAME);
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
             oos.writeObject(this);
-            System.out.println("SAVED TO: " + new File(FILE_NAME).getAbsolutePath());
+            oos.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -23,14 +24,19 @@ public class AppConfig implements Serializable {
 
     public static AppConfig loadAll() {
         File file = new File(FILE_NAME);
-        if (!file.exists()) return new AppConfig();
+        if (!file.exists()) {
+            return new AppConfig();
+        }
 
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
-            return (AppConfig) ois.readObject();
+            AppConfig config = (AppConfig) ois.readObject();
+            return config;
         } catch (Exception e) {
             return new AppConfig();
         }
     }
 
-    public void saveAll() { saveToDat(); }
+    public void saveAll() {
+        saveToDat();
+    }
 }

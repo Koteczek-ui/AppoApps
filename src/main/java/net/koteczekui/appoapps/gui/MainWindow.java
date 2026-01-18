@@ -34,7 +34,7 @@ public class MainWindow extends JFrame {
     }
 
     private void setupUI() {
-        setTitle("AppoApps 2026011712");
+        setTitle("AppoApps 2026011801");
         setSize(550, 700);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(new BorderLayout(10, 10));

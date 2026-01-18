@@ -44,8 +44,4 @@ public class LauncherLogic {
         }
         throw new IOException("Desktop environment does not support launching this file type.");
     }
-
-    public boolean requiresElevation(String path) {
-        return path.contains("C:\\Windows") || path.contains("ProgramData");
-    }
 }

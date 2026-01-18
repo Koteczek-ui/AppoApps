@@ -64,8 +64,4 @@ public class SearchEngine {
     private boolean isValidDirectory(File dir) {
         return dir.exists() && dir.isDirectory() && dir.canRead();
     }
-
-    public int getResultCount() {
-        return appRegistry.size();
-    }
 }
